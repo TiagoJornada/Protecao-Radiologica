@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz de Proteção Radiológica</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-2: #1d4ed8;
+      --accent: #0ea5e9;
+      --border: #dbe4f0;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, #dbeafe 0, transparent 28%),
+        radial-gradient(circle at top right, #e0f2fe 0, transparent 24%),
+        linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 28px 16px 40px; }
+    .hero, .card, .result-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+    .hero { padding: 28px; margin-bottom: 22px; overflow: hidden; position: relative; }
+    .hero::after {
+      content: "☢️";
+      position: absolute;
+      right: 22px;
+      top: 18px;
+      font-size: 42px;
+      opacity: 0.12;
+    }
+    h1 { margin: 0 0 10px; font-size: 32px; line-height: 1.15; }
+    .subtitle {
+      font-size: 16px; color: var(--muted); line-height: 1.6; margin: 0 0 16px; max-width: 740px;
+    }
+    .callout {
+      background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a;
+      border-radius: 16px; padding: 14px 16px; font-size: 14px; line-height: 1.55; margin-top: 12px;
+    }
+    .grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; margin-top: 22px; }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { font-size: 14px; font-weight: 700; }
+    .field input {
+      width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border);
+      font-size: 15px; background: #fff;
+    }
+    .actions-top { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      border: none; border-radius: 14px; cursor: pointer; font-weight: 700; padding: 14px 18px;
+      transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: white; }
+    .btn-secondary { background: #e5e7eb; color: #111827; }
+    .card { padding: 24px; display: none; }
+    .topline {
+      display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .pill {
+      background: #eff6ff; color: #1d4ed8; border-radius: 999px; padding: 8px 12px; font-size: 13px; font-weight: 700;
+    }
+    .progress-track {
+      width: 100%; height: 12px; background: #e5edf7; border-radius: 999px; overflow: hidden; margin-bottom: 22px;
+    }
+    .progress-bar {
+      height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--primary));
+      transition: width 0.25s ease;
+    }
+    .question { font-size: 24px; line-height: 1.35; margin: 0 0 22px; }
+    .options { display: grid; gap: 12px; }
+    .option {
+      border: 1px solid var(--border); border-radius: 18px; padding: 16px 18px; background: #fff;
+      display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+    .option:hover {
+      border-color: #93c5fd; box-shadow: 0 8px 18px rgba(37, 99, 235, 0.08); transform: translateY(-1px);
+    }
+    .option.selected {
+      border-color: var(--primary); background: #eff6ff; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.10);
+    }
+    .letter {
+      min-width: 34px; height: 34px; border-radius: 50%; background: #dbeafe; color: #1d4ed8;
+      display: inline-flex; align-items: center; justify-content: center; font-weight: 700;
+    }
+    .option-text { font-size: 16px; line-height: 1.5; text-align: left; }
+    .nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+    .helper { margin-top: 14px; font-size: 14px; color: var(--muted); }
+    .result-card { display: none; padding: 28px; margin-top: 20px; text-align: center; }
+    .score { font-size: 56px; font-weight: 800; margin: 12px 0 6px; color: var(--primary); }
+    .score-sub {
+      color: var(--muted); font-size: 16px; line-height: 1.6; max-width: 640px; margin: 0 auto 18px;
+    }
+    .mini-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+    .mini-box {
+      border: 1px solid var(--border); border-radius: 18px; padding: 16px; background: #fbfdff;
+    }
+    .mini-box strong { display: block; font-size: 24px; margin-bottom: 4px; }
+    .alert {
+      display: none; margin-top: 14px; border-radius: 14px; padding: 12px 14px; font-size: 14px; line-height: 1.5;
+    }
+    .alert.warn { display: block; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
+    .alert.ok { display: block; background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+    @media (max-width: 720px) {
+      h1 { font-size: 26px; }
+      .grid { grid-template-columns: 1fr; }
+      .question { font-size: 21px; }
+      .mini-summary { grid-template-columns: 1fr; }
+      .card, .hero, .result-card { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero" id="introScreen">
+      <h1>Quiz de Proteção Radiológica</h1>
+      <p class="subtitle">
+        Este quiz foi criado para avaliar, de forma simples e educativa, quanto você já conhece sobre proteção radiológica no dia a dia do hospital.
+        A proposta é individual e tem caráter apenas diagnóstico.
+      </p>
+      <div class="callout">
+        <strong>Importante:</strong> tente responder sem consultar internet, IA ou colegas — sem cola, hein 😄<br>
+        A ideia aqui é apenas entender seu conhecimento atual. Pedimos também que cada pessoa responda <strong>apenas uma vez</strong>.
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label for="formacao">Qual sua formação?</label>
+          <input id="formacao" type="text" placeholder="Ex.: Técnico em Radiologia, Enfermeiro, Médico..." />
+        </div>
+        <div class="field">
+          <label for="tempoHospital">Há quanto tempo você trabalha no hospital?</label>
+          <input id="tempoHospital" type="text" placeholder="Ex.: 6 meses, 2 anos, 10 anos..." />
+        </div>
+      </div>
+
+      <div class="actions-top">
+        <button class="btn-primary" id="startBtn">Começar quiz</button>
+      </div>
+      <div class="alert" id="introAlert"></div>
+    </section>
+
+    <section class="card" id="quizCard">
+      <div class="topline">
+        <div class="pill" id="questionCounter">Pergunta 1 de 15</div>
+        <div class="pill" id="currentTopic">Proteção radiológica</div>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <h2 class="question" id="questionText"></h2>
+      <div class="options" id="optionsContainer"></div>
+      <div class="helper" id="helperText">Selecione uma alternativa para continuar.</div>
+
+      <div class="nav">
+        <button class="btn-secondary" id="prevBtn">Anterior</button>
+        <button class="btn-primary" id="nextBtn">Próxima</button>
+      </div>
+      <div class="alert" id="quizAlert"></div>
+    </section>
+
+    <section class="result-card" id="resultCard">
+      <div class="pill">Resultado final</div>
+      <h2 style="margin:14px 0 0; font-size:30px;">Obrigado por responder!</h2>
+      <div class="score" id="scoreValue">0/15</div>
+      <p class="score-sub" id="scoreText"></p>
+
+      <div class="mini-summary">
+        <div class="mini-box">
+          <strong id="correctCount">0</strong>
+          <span>acertos</span>
+        </div>
+        <div class="mini-box">
+          <strong id="wrongCount">0</strong>
+          <span>erros</span>
+        </div>
+        <div class="mini-box">
+          <strong id="percentValue">0%</strong>
+          <span>aproveitamento</span>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:22px; text-align:left;">
+        <strong>Resumo do participante:</strong><br>
+        <span id="participantSummary"></span>
+      </div>
+      <div class="alert ok" id="submitOk" style="display:none; margin-top:18px;"></div>
+      <div class="alert warn" id="submitWarn" style="display:none; margin-top:18px;"></div>
+    </section>
+  </div>
+
+  <script>
+    const quizKey = "quiz_protecao_radiologica_respondido";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw4GzfdZO7iopDkniaW3_FhuUWK6RS1NRq0Ztpp7bRre19x5mw8JpTXanFhftufcDYS4A/exec";
+
+    const questions = [
+      { topic: "Conceito básico", question: "ALARA significa o quê?", options: ["Aplicar radiação em alta intensidade", "Usar radiação apenas em ambientes fechados", "Manter a exposição tão baixa quanto razoavelmente possível", "Evitar qualquer exame com radiação"], correct: 2 },
+      { topic: "Conceito básico", question: "A radiação ionizante é aquela que:", options: ["Não tem energia para interagir com a matéria", "Tem energia suficiente para ionizar átomos e moléculas", "Só existe em usinas nucleares", "Está presente apenas na luz visível"], correct: 1 },
+      { topic: "Radiografia", question: "Qual dos exames abaixo utiliza radiação ionizante?", options: ["Ultrassonografia", "Ressonância magnética", "Radiografia", "Eletroencefalograma"], correct: 2 },
+      { topic: "Tomografia", question: "Em geral, a tomografia computadorizada:", options: ["Usa menos radiação que a radiografia em qualquer situação", "Não usa radiação ionizante", "Pode envolver dose maior de radiação que uma radiografia simples", "Só usa radiação em crianças"], correct: 2 },
+      { topic: "Proteção ocupacional", question: "Na radiografia, uma medida básica de proteção radiológica para trabalhadores é:", options: ["Permanecer próximo ao paciente sempre", "Usar blindagem, distância e reduzir o tempo de exposição", "Retirar o avental para facilitar o trabalho", "Desligar o dosímetro durante o exame"], correct: 1 },
+      { topic: "Dosimetria", question: "O dosímetro individual serve principalmente para:", options: ["Melhorar a qualidade da imagem", "Reduzir automaticamente a dose do equipamento", "Medir a exposição ocupacional do trabalhador", "Substituir o avental plumbífero"], correct: 2 },
+      { topic: "Dosimetria", question: "Sobre o uso do dosímetro, o correto é:", options: ["Pode ser compartilhado entre colegas do mesmo setor", "Deve ser de uso individual", "Só precisa ser usado em auditorias", "É opcional para quem trabalha com radiação"], correct: 1 },
+      { topic: "Hemodinâmica", question: "Em hemodinâmica, a equipe pode reduzir a exposição ocupacional ao:", options: ["Ficar o mais perto possível da fonte", "Aumentar o tempo de fluoroscopia", "Usar barreiras, avental, protetor de tireoide e manter distância sempre que possível", "Trabalhar sem monitorização individual"], correct: 2 },
+      { topic: "Arco em C", question: "O arco em C é utilizado principalmente em:", options: ["Procedimentos cirúrgicos e intervencionistas com fluoroscopia", "Exames laboratoriais", "Ressonância magnética", "Ultrassonografia obstétrica"], correct: 0 },
+      { topic: "Gestantes", question: "Sobre gestantes e exames com radiação, o mais correto é:", options: ["Toda gestante está proibida de fazer exames com radiação", "A gestação nunca interfere na decisão do exame", "O exame deve ser justificado e realizado com otimização da dose quando necessário", "Toda exposição sempre causa dano fetal grave"], correct: 2 },
+      { topic: "Radiação espalhada", question: "A radiação espalhada é:", options: ["Inexistente em exames com fluoroscopia", "Gerada principalmente pela interação do feixe com o paciente", "Exclusiva da tomografia", "Sem importância para a equipe"], correct: 1 },
+      { topic: "Fluoroscopia", question: "Uma forma de reduzir dose em fluoroscopia é:", options: ["Usar fluoroscopia contínua o tempo todo", "Aumentar sempre a magnificação", "Utilizar colimação adequada e fluoroscopia pulsada, quando possível", "Retirar as proteções móveis da sala"], correct: 2 },
+      { topic: "Mitos sobre radiação", question: "Forno de micro-ondas emite radiação ionizante?", options: ["Sim", "Não", "Apenas quando está com defeito", "Apenas se estiver ligado por muito tempo"], correct: 1 },
+      { topic: "Radiação solar", question: "A radiação solar pode causar danos biológicos principalmente por causa:", options: ["Da radiação ultravioleta", "Das ondas de rádio", "Do campo gravitacional", "Do magnetismo atmosférico"], correct: 0 },
+      { topic: "Mitos sobre radiação", question: "Qual das afirmações abaixo representa um mito?", options: ["Exames com radiação devem ser justificados", "Distância, tempo e blindagem ajudam na proteção radiológica", "Todo tipo de radiação é igual e igualmente perigoso", "O uso de monitorização ocupacional é importante"], correct: 2 }
+    ];
+
+    let currentIndex = 0;
+    const answers = new Array(questions.length).fill(null);
+
+    const introScreen = document.getElementById("introScreen");
+    const quizCard = document.getElementById("quizCard");
+    const resultCard = document.getElementById("resultCard");
+    const startBtn = document.getElementById("startBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const questionCounter = document.getElementById("questionCounter");
+    const currentTopic = document.getElementById("currentTopic");
+    const progressBar = document.getElementById("progressBar");
+    const questionText = document.getElementById("questionText");
+    const optionsContainer = document.getElementById("optionsContainer");
+    const helperText = document.getElementById("helperText");
+    const introAlert = document.getElementById("introAlert");
+    const quizAlert = document.getElementById("quizAlert");
+    const submitOk = document.getElementById("submitOk");
+    const submitWarn = document.getElementById("submitWarn");
+
+    const formacaoInput = document.getElementById("formacao");
+    const tempoInput = document.getElementById("tempoHospital");
+
+    function showAlert(target, type, text) {
+      target.className = "alert " + type;
+      target.textContent = text;
+    }
+
+    function clearAlert(target) {
+      target.className = "alert";
+      target.textContent = "";
+    }
+
+    function renderQuestion() {
+      const q = questions[currentIndex];
+      const percent = ((currentIndex + 1) / questions.length) * 100;
+
+      questionCounter.textContent = `Pergunta ${currentIndex + 1} de ${questions.length}`;
+      currentTopic.textContent = q.topic;
+      progressBar.style.width = percent + "%";
+      questionText.textContent = q.question;
+      optionsContainer.innerHTML = "";
+
+      q.options.forEach((option, index) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "option" + (answers[currentIndex] === index ? " selected" : "");
+        btn.innerHTML = `
+          <span class="letter">${String.fromCharCode(65 + index)}</span>
+          <span class="option-text">${option}</span>
+        `;
+        btn.addEventListener("click", () => {
+          answers[currentIndex] = index;
+          clearAlert(quizAlert);
+          renderQuestion();
+        });
+        optionsContainer.appendChild(btn);
+      });
+
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.textContent = currentIndex === questions.length - 1 ? "Finalizar quiz" : "Próxima";
+      helperText.textContent = answers[currentIndex] === null
+        ? "Selecione uma alternativa para continuar."
+        : "Resposta selecionada. Você pode seguir para a próxima pergunta.";
+    }
+
+    function startQuiz() {
+      if (localStorage.getItem(quizKey) === "sim") {
+        showAlert(introAlert, "warn", "Este dispositivo já registrou uma resposta para este quiz.");
+        return;
+      }
+
+      if (!formacaoInput.value.trim() || !tempoInput.value.trim()) {
+        showAlert(introAlert, "warn", "Preencha sua formação e há quanto tempo trabalha no hospital antes de iniciar.");
+        return;
+      }
+
+      clearAlert(introAlert);
+      introScreen.style.display = "none";
+      quizCard.style.display = "block";
+      renderQuestion();
+    }
+
+    function nextQuestion() {
+      if (answers[currentIndex] === null) {
+        showAlert(quizAlert, "warn", "Selecione uma alternativa antes de continuar.");
+        return;
+      }
+
+      clearAlert(quizAlert);
+
+      if (currentIndex < questions.length - 1) {
+        currentIndex += 1;
+        renderQuestion();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentIndex > 0) {
+        clearAlert(quizAlert);
+        currentIndex -= 1;
+        renderQuestion();
+      }
+    }
+
+    async function submitResult(payload) {
+      try {
+        const resp = await fetch(WEB_APP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) throw new Error("Falha ao enviar");
+
+        submitOk.style.display = "block";
+        submitWarn.style.display = "none";
+        submitOk.textContent = "Seu resultado foi enviado com sucesso para a planilha.";
+      } catch (e) {
+        submitWarn.style.display = "block";
+        submitOk.style.display = "none";
+        submitWarn.textContent = "Não foi possível enviar o resultado para a planilha neste momento.";
+      }
+    }
+
+    function finishQuiz() {
+      let score = 0;
+      answers.forEach((answer, index) => {
+        if (answer === questions[index].correct) score += 1;
+      });
+
+      const percent = Math.round((score / questions.length) * 100);
+      let feedback = "";
+
+      if (percent >= 85) {
+        feedback = "Excelente resultado. Você demonstra um domínio muito bom dos conceitos básicos de proteção radiológica.";
+      } else if (percent >= 65) {
+        feedback = "Bom resultado. Você já tem uma base consistente, com alguns pontos que ainda podem ser reforçados.";
+      } else {
+        feedback = "Obrigado por responder. O resultado mostra oportunidades importantes para reforço educativo em proteção radiológica.";
+      }
+
+      quizCard.style.display = "none";
+      resultCard.style.display = "block";
+
+      document.getElementById("scoreValue").textContent = `${score}/${questions.length}`;
+      document.getElementById("scoreText").textContent = feedback;
+      document.getElementById("correctCount").textContent = score;
+      document.getElementById("wrongCount").textContent = questions.length - score;
+      document.getElementById("percentValue").textContent = percent + "%";
+      document.getElementById("participantSummary").textContent = `${formacaoInput.value.trim()} • ${tempoInput.value.trim()} de trabalho no hospital.`;
+
+      localStorage.setItem(quizKey, "sim");
+
+      const payload = {
+        formacao: formacaoInput.value.trim(),
+        tempo_hospital: tempoInput.value.trim(),
+        acertos: score,
+        percentual: percent,
+        respostas: answers.map((ans, idx) => `Q${idx + 1}:${ans === null ? "-" : String.fromCharCode(65 + ans)}`)
+      };
+
+      submitResult(payload);
+    }
+
+    startBtn.addEventListener("click", startQuiz);
+    nextBtn.addEventListener("click", nextQuestion);
+    prevBtn.addEventListener("click", prevQuestion);
+  </script>
+</body>
+</html>
